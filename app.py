@@ -19,20 +19,20 @@ utils_ops.tf = tf.compat.v1
 # Patch the location of gfile
 tf.gfile = tf.io.gfile
 
-PATH_TO_LABELS = 'cav_detection_tf_obj_det_api/my_custom_detector/training/object-detection.pbtxt'
+PATH_TO_LABELS = 'cav_detection_tf_obj_det_api\\my_custom_detector\\training\\object-detection.pbtxt'
 category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)
 
 # If you want to test the code with your images, just add path to the images to the TEST_IMAGE_PATHS.
 PATH_TO_TEST_IMAGES_DIR = pathlib.Path('images_test')
-PATH_TO_SAVE_DETECTED = pathlib.Path('images_analyzed')
 PATH_TO_SAVE_RAW = 'images_raw'
+PATH_TO_SAVE_DETECTED = PATH_TO_SAVE_RAW #'images_analyzed'
 TEST_IMAGE_PATHS = sorted(list(PATH_TO_TEST_IMAGES_DIR.glob("*.jpg")))
 print(TEST_IMAGE_PATHS)
 
 
 def load_model():
     # model_dir = "/content/drive/My Drive/cav_detection_tf_obj_det_api/my_custom_detector/trained-inference-graphs/saved_model"
-    model_dir = "cav_detection_tf_obj_det_api/my_custom_detector/trained-inference-graphs/saved_model"
+    model_dir = "cav_detection_tf_obj_det_api\\my_custom_detector\\trained-inference-graphs\\saved_model"
     model = tf.compat.v2.saved_model.load(model_dir, None)
     model = model.signatures['serving_default']
     return model
@@ -81,24 +81,30 @@ def file_upload():
             # break
         now = datetime.now()
         date_time_str = now.strftime("%Y%m%d-%H%M%S")
-        save_destination = target + "/" + filename + "_" + date_time_str + ext
+        save_destination = target + "\\" + filename + "_" + date_time_str + ext
         print("Accept incoming file:", filename)
         print("Save it to:", save_destination)
         upload.save(save_destination)
-        name = target + '/' + str(upload.filename)
-        is_caries_found, image_analyzed_fullpath = save_inference(detection_model, save_destination)
-        return render_template("results.html", image_raw_fullpath=save_destination, image_analyzed_fullpath=image_analyzed_fullpath, detected=is_caries_found)
+        name = target + '\\' + str(upload.filename)
+        is_caries_found, analyzed_save_destination = save_inference(detection_model, save_destination)
+        analyzed_save_destination = APP_ROOT + "\\" + analyzed_save_destination
+        print("PATHS::::::")
+        print(save_destination)
+        print(analyzed_save_destination)
+        return render_template("results.html", image_raw_fullpath=save_destination, image_analyzed_fullpath=analyzed_save_destination, detected=is_caries_found)
 
-@app.route('/file_upload/<file_path>', methods=['GET','POST'])
+@app.route('/file_upload/<path:file_path>', methods=['GET','POST']) #, methods=['GET','POST']
 def send_image(file_path):
     print("SENDING IMAGE")
     full_filename = ntpath.basename(file_path) # with ext, Linux compatible
     print(full_filename)
     return send_from_directory(PATH_TO_SAVE_RAW, full_filename)
+
 """
-@app.route('/upload/<file_path>')
-def send_image_analyzed(file_path):
-    full_filename = ntpath.basename(file_path)  # with ext, Linux compatible
+@app.route('/file_upload/ready/<path:file_path>', methods=['GET','POST']) #, methods=['GET','POST']
+def send_image_ready(file_path):
+    print("SENDING IMAGE")
+    full_filename = ntpath.basename(file_path) # with ext, Linux compatible
     print(full_filename)
     return send_from_directory(PATH_TO_SAVE_DETECTED, full_filename)
 """
@@ -137,7 +143,7 @@ def run_inference_for_single_image(model, image):
         detection_masks_reframed = utils_ops.reframe_box_masks_to_image_masks(
             output_dict['detection_masks'], output_dict['detection_boxes'],
             image.shape[0], image.shape[1])
-        detection_masks_reframed = tf.cast(detection_masks_reframed > 0.4,
+        detection_masks_reframed = tf.cast(detection_masks_reframed > 0.5,
                                            tf.uint8)
         output_dict['detection_masks_reframed'] = detection_masks_reframed.numpy()
 
@@ -152,6 +158,20 @@ def save_inference(model, image_path):
     image_np = np.array(Image.open(image_path))
     # Actual detection.
     output_dict, num_detections = run_inference_for_single_image(model, image_np)
+    print(output_dict)
+    caries_nums = 0
+    iter = 0
+    for score in output_dict['detection_scores']:
+        box_array = output_dict['detection_boxes'][iter]
+        area = float((box_array[2]-box_array[0])*(box_array[3]-box_array[1]))
+        print(f"score={score}, area={area}")
+        if score > 0.5 and area < 0.05:
+            #print(f"area={area}")
+            caries_nums += 1
+        else:
+            output_dict['detection_scores'][iter] = 0
+        iter += 1
+        #print(score)
     #print(output_dict['num_detections'])
     # print(type(category_index))
     #print(category_index)
@@ -174,15 +194,15 @@ def save_inference(model, image_path):
     now = datetime.now()
     date_time_str = now.strftime("%Y%m%d-%H%M%S")
     # print('DateTime String:', date_time_str)
-    path_to_save = f"{PATH_TO_SAVE_DETECTED}/test1"
+    path_to_save = f"{PATH_TO_SAVE_DETECTED}"
     if not os.path.isdir(path_to_save):
         # os.mkdirs(path_to_save)
         os.makedirs(path_to_save, exist_ok=True)
-    image_analyzed_fullpath = path_to_save + "/" + filename + "_analyzed_" + date_time_str + ".jpg"
+    image_analyzed_fullpath = path_to_save + "\\" + filename + "_analyzed" + ".jpg"
     #im.save(f"{path_to_save}\\{filename}_analyzed_{date_time_str}.jpg")
     im.save(f"{image_analyzed_fullpath}")
     is_caries_found = True
-    if num_detections == 0:
+    if caries_nums == 0:
         is_caries_found = False
     return is_caries_found, image_analyzed_fullpath
 

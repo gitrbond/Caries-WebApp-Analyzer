@@ -2,14 +2,14 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Загрузите фото</title>
 </head>
 <body>
     <h1>Детский помощник - анализ ротовой полости</h1>
     <br>
     <br>
     <br>
-    <h3>Upload image</h3>
+    <h3>Загрузите фото ротовой полости:</h3>
     <br>
     <form id="upload-form" action="{{ url_for('file_upload') }}" method="POST" enctype="multipart/form-data">
         <input type="file" name="file" accept="image/*">
