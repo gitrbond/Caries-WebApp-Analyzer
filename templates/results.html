@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script type="text/javascript">
+        var number = "123";
+    </script>
+</head>
+<body>
+    <h3><u>Uploaded Image</u></h3>
+    <br>
+    <h1>
+        <script type="text/javascript">
+        document.write(number)
+      </script>
+    </h1>
+    <img src ="{{ url_for('send_image', file_path=image_raw_fullpath) }}">
+    <br>
+    <h3>Image with facial detection</h3>
+    <br>
+    <img src="{{ url_for('send_image', file_path=image_analyzed_fullpath) }}">
+    <br>
+    <h3>Итог:</h3>
+    {%  if detected %}
+    <p>
+        Кариес обнаружен
+    </p>
+    {%  else %}
+    <p>
+        Кариес не обнаружен
+    </p>
+    {% endif %}
+</body>
+</html>

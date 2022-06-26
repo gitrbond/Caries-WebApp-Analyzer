@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <h1>Детский помощник - анализ ротовой полости</h1>
+    <br>
+    <br>
+    <br>
+    <h3>Upload image</h3>
+    <br>
+    <form id="upload-form" action="{{ url_for('file_upload') }}" method="POST" enctype="multipart/form-data">
+        <input type="file" name="file" accept="image/*">
+        <input type ="submit" value="Отправить">
+    </form>
+</body>
+</html>
