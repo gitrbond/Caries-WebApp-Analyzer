@@ -4,6 +4,8 @@ A simple Flask web app that analyzes the uploaded picture and recognizes caries 
 Запуск:
 pip install -r packages_to_be_intalled.txt
 
+![Screenshot](example.png)
+
 cd cav_detection_tf_obj_det_api/models/research
 
 python -m pip install .
